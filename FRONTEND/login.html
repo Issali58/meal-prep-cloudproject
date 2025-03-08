@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - NutriGains</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/login-styles.css" />
+  </head>
+  <body>
+    <div class="screen-1">
+      <div class="logo">NutriGains.</div>
+
+      <div class="button-container">
+        <!-- Sign Out Button -->
+        <button id="signOutButton" class="login-btn" style="display: none">
+          Sign Out
+        </button>
+
+        <!-- Sign In Button -->
+        <button id="signInButton" class="login-btn">
+          Sign In with Cognito
+        </button>
+
+        <!-- Sign Up Button -->
+        <button id="signupButton" class="login-btn">
+          Sign Up with Cognito
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // Add this function to handle the Cognito callback
+      function handleAuthCallback() {
+        // Get the fragments from the URL
+        const fragments = new URLSearchParams(
+          window.location.hash.substring(1)
+        );
+        const idToken = fragments.get("id_token");
+        const accessToken = fragments.get("access_token");
+
+        if (idToken) {
+          // Store tokens
+          localStorage.setItem("accessToken", accessToken);
+          localStorage.setItem("idToken", idToken);
+
+          // Decode the ID token to get user info
+          try {
+            const payload = JSON.parse(atob(idToken.split(".")[1]));
+            console.log("Token payload:", payload);
+
+            // Store email in localStorage
+            if (payload.email) {
+              localStorage.setItem("userEmail", payload.email);
+              console.log("Stored email:", payload.email);
+            }
+          } catch (error) {
+            console.error("Error decoding token:", error);
+          }
+        }
+      }
+
+      // Call this when the page loads
+      document.addEventListener("DOMContentLoaded", function () {
+        if (window.location.hash) {
+          handleAuthCallback();
+        }
+      });
+
+      document.addEventListener("DOMContentLoaded", function () {
+        const cognitoDomain = "resto-auth.auth.us-east-1.amazoncognito.com";
+        const clientId = "16g32no3p69nb8sp6qi55fmoj4";
+        const redirectUri = "http://localhost:3000/dashboard.html";
+
+        // Check if user is signed in
+        const accessToken = localStorage.getItem("accessToken");
+        if (accessToken) {
+          document.getElementById("signOutButton").style.display = "block";
+          document.getElementById("signInButton").style.display = "none";
+          document.getElementById("signupButton").style.display = "none";
+        }
+
+        // Sign In Button Handler
+        document
+          .getElementById("signInButton")
+          .addEventListener("click", function () {
+            const signInUrl = `https://${cognitoDomain}/login?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(
+              redirectUri
+            )}`;
+            window.location.href = signInUrl;
+          });
+
+        // Sign Up Button Handler
+        document
+          .getElementById("signupButton")
+          .addEventListener("click", function () {
+            const signUpUrl = `https://${cognitoDomain}/signup?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(
+              redirectUri
+            )}`;
+            window.location.href = signUpUrl;
+          });
+
+        // Sign Out Button Handler
+        document
+          .getElementById("signOutButton")
+          .addEventListener("click", function () {
+            localStorage.removeItem("accessToken");
+            const logoutUrl = `https://${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
+              redirectUri
+            )}`;
+            window.location.href = logoutUrl;
+          });
+      });
+    </script>
+  </body>
+</html>

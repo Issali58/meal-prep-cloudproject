@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Basic Meal Plan - NutriGains</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      .hamburger {
+        display: none;
+        flex-direction: column;
+        cursor: pointer;
+        padding: 10px;
+        color: #e3b04b;
+      }
+
+      .logo {
+        color: #e3b04b;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        transition: color 0.3s ease;
+      }
+
+      .logo:hover {
+        color: #e3b04b;
+      }
+      .meal-plan-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 20px;
+      }
+
+      .meal-details {
+        background: rgba(45, 45, 45, 0.7);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 10px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        color: #ffffff;
+      }
+
+      .meal-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+      }
+
+      .meal-card {
+        background: rgba(45, 45, 45, 0.7);
+        backdrop-filter: blur (10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .meal-card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+      }
+
+      .meal-card-content {
+        padding: 20px;
+      }
+
+      .order-section {
+        background: rgba(45, 45, 45, 0.7); /* Reduced opacity */
+        backdrop-filter: blur(10px); /* Creates the glass effect */
+        -webkit-backdrop-filter: blur(10px); /* For Safari support */
+        color: #ffffff;
+        border-radius: 10px;
+        padding: 30px;
+        margin-top: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1); /* Adds subtle border */
+      }
+
+      .order-form {
+        display: grid;
+        gap: 20px;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .form-group label {
+        font-weight: bold;
+        color: #ffffff;
+      }
+
+      .form-group input,
+      .form-group select {
+        padding: 10px;
+        border: 1px solid #555555;
+        border-radius: 4px;
+        font-size: 16px;
+      }
+
+      .order-btn {
+        background-color: #ff6b6b;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+      }
+
+      .order-btn:hover {
+        background-color: #c99a3c;
+      }
+
+      .auth-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.9);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .auth-message {
+        background: #2d2d2d;
+        color: #ffffff;
+        padding: 30px;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .login-btn {
+        background: #ff6b6b;
+        color: #1a1a1a;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        margin-top: 20px;
+        cursor: pointer;
+      }
+
+      .nav-user-status {
+        color: white;
+        margin-right: 20px;
+      }
+
+      .top-nav {
+        background-color: #333;
+        color: white;
+        padding: 10px 20px;
+        position: relative;
+      }
+
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .nav-links {
+        display: flex; /* Default to flex for larger screens */
+        flex-direction: row;
+      }
+
+      .nav-links a {
+        color: white;
+        text-decoration: none;
+        padding: 10px 15px;
+      }
+
+      .hamburger {
+        display: none; /* Hidden by default */
+        cursor: pointer;
+        font-size: 24px;
+        color: white;
+      }
+
+      /* Responsive styles */
+      @media (max-width: 768px) {
+        .nav-links {
+          display: none; /* Hide links by default */
+          flex-direction: column; /* Stack links vertically */
+          position: fixed; /* Position it absolutely */
+          top: 60px; /* Adjust based on your nav height */
+          left: 0;
+          right: 0;
+          background: rgb(13, 10, 10); /* Background color */
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          z-index: 1000; /* Ensure it appears above other content */
+        }
+
+        .nav-links.active {
+          display: flex; /* Show links when active */
+        }
+
+        .hamburger {
+          display: block; /* Show hamburger icon on small screens */
+          color: #e3b04b;
+        }
+      }
+    </style>
+  </head>
+  <body class="dashboard-page">
+    <!-- Navigation -->
+    <nav class="top-nav">
+      <div class="nav-container">
+        <div class="logo">NutriGains.</div>
+        <div class="hamburger" id="hamburger">
+          <i class="fas fa-bars"></i>
+        </div>
+        <div class="nav-links" id="navLinks">
+          <a href="index3.html" id="homeLink" onclick="handleHomeClick(event)"
+            >HOME</a
+          >
+          <a href="#" class="active">MENU</a>
+          <a href="#">BLOG</a>
+          <a href="#">CONTACT</a>
+          <span class="phone"><i class="fas fa-phone"></i> (256) 450-450</span>
+          <span id="userStatus" class="nav-user-status"></span>
+          <button class="signin-btn" id="authButton">
+            <i class="fas fa-user"></i>
+            <span id="authButtonText">Sign In</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="meal-plan-container">
+      <div class="meal-details">
+        <h1>Basic Meal Plan</h1>
+        <p>A perfect balance of nutrition and taste for your everyday meals</p>
+
+        <div class="meal-grid">
+          <div class="meal-card">
+            <img
+              src="../img/healthy-meal-prep-containers-green-burgers-broccoli-chickpeas-salad-healthy-meal-prep-containers-green-burgers-138375191.webp"
+              alt="Monday Meal"
+            />
+            <div class="meal-card-content">
+              <h3>Grilled chicken</h3>
+              <p>Grilled Chicken with Quinoa</p>
+            </div>
+          </div>
+          <!-- Add more meal cards -->
+        </div>
+      </div>
+
+      <div class="order-section">
+        <h2>Place Your Order</h2>
+        <form id="orderForm" class="order-form">
+          <div class="form-group">
+            <label for="startDate">Start Date</label>
+            <input type="date" id="startDate" required />
+          </div>
+          <div class="form-group">
+            <label for="duration">Duration</label>
+            <select id="duration" required>
+              <option value="1">1 Week</option>
+              <option value="2">2 Weeks</option>
+              <option value="4">4 Weeks</option>
+            </select>
+          </div>
+          <button type="submit" class="order-btn">Place Order</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Auth Overlay -->
+    <div id="authOverlay" class="auth-overlay">
+      <div class="auth-message">
+        <h2>Please Sign In</h2>
+        <p>You need to be signed in to place an order</p>
+        <button class="login-btn" onclick="redirectToLogin()">Sign In</button>
+      </div>
+    </div>
+
+    <script type="module">
+      import config from "./js/config.js";
+
+      async function checkAuth() {
+        try {
+          const userInfo = await getUserInfo();
+          if (!userInfo) {
+            const authOverlay = document.getElementById("authOverlay");
+            if (authOverlay) {
+              authOverlay.style.display = "flex";
+            }
+            return false;
+          }
+          return true;
+        } catch (error) {
+          console.error("Auth check error:", error);
+          return false;
+        }
+      }
+      // Check authentication state
+      // Add this new function to get user info from the UserInfo endpoint
+      async function getUserInfo() {
+        try {
+          const accessToken = localStorage.getItem("accessToken");
+          if (!accessToken) {
+            console.log("No access token found");
+            return null;
+          }
+
+          console.log("Fetching user info from UserInfo endpoint...");
+          const response = await fetch(
+            `https://${config.COGNITO_DOMAIN}/oauth2/userInfo`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          );
+
+          if (!response.ok) {
+            console.error("UserInfo endpoint error:", response.status);
+            throw new Error("Failed to fetch user info");
+          }
+
+          const userInfo = await response.json();
+          console.log("UserInfo response:", userInfo);
+          return userInfo;
+        } catch (error) {
+          console.error("Error fetching user info:", error);
+          return null;
+        }
+      }
+
+      // Update the updateAuthButtonText function to be async
+      async function updateAuthButtonText() {
+        const authButton = document.getElementById("authButtonText");
+        const userStatus = document.getElementById("userStatus");
+
+        try {
+          const userInfo = await getUserInfo();
+
+          if (userInfo && authButton && userStatus) {
+            authButton.textContent = "Sign Out";
+            // Use name if available, fallback to email
+            const displayName =
+              userInfo.name ||
+              userInfo.given_name ||
+              userInfo.username ||
+              userInfo.email;
+            userStatus.textContent = `Welcome, ${displayName}`;
+          }
+        } catch (error) {
+          console.error("Error updating auth button:", error);
+        }
+      }
+      // Handle sign out
+      function handleSignOut() {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("idToken");
+        localStorage.removeItem("userEmail");
+
+        // Redirect to Cognito logout
+        const logoutUri = encodeURIComponent(
+          `${window.location.origin}/index3.html`
+        );
+        const signOutUrl = `https://${config.COGNITO_DOMAIN}/logout?client_id=${config.COGNITO_CLIENT_ID}&logout_uri=${logoutUri}`;
+        window.location.href = signOutUrl;
+      }
+      // Make redirectToLogin available globally
+      window.redirectToLogin = function () {
+        window.location.href = "index3.html";
+      };
+
+      // Update the placeOrder function to use UserInfo
+      async function placeOrder(orderDetails) {
+        const userInfo = await getUserInfo();
+        console.log("User info retrieved for order:", userInfo);
+
+        if (!userInfo || !userInfo.email) {
+          throw new Error("Unable to retrieve user information");
+        }
+
+        const payload = {
+          email: userInfo.email,
+          startDate: orderDetails.startDate,
+          duration: orderDetails.duration,
+          totalWeeks: orderDetails.totalWeeks,
+          planType: orderDetails.planType,
+          orderItems: orderDetails.orderItems,
+        };
+
+        console.log("Final payload being sent:", payload);
+
+        const response = await fetch(`${config.API_ENDPOINT}`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const responseText = await response.text();
+        console.log("API Response:", responseText);
+
+        if (!response.ok) {
+          throw new Error(`Order failed: ${responseText}`);
+        }
+
+        return responseText;
+      }
+
+      // Update the DOMContentLoaded event listener
+      document.addEventListener("DOMContentLoaded", async function () {
+        const orderForm = document.getElementById("orderForm");
+        const authButton = document.getElementById("authButton");
+        if (authButton) {
+          authButton.addEventListener("click", async () => {
+            const userInfo = await getUserInfo();
+            if (userInfo) {
+              // User is signed in, so handle sign out
+              handleSignOut();
+            } else {
+              // User is not signed in, redirect to login
+              redirectToLogin();
+            }
+          });
+        }
+        if (orderForm) {
+          orderForm.addEventListener("submit", async function (event) {
+            event.preventDefault();
+            console.log("Form submission started");
+
+            try {
+              const isAuthenticated = await checkAuth();
+              if (!isAuthenticated) {
+                console.log("Auth check failed");
+                return;
+              }
+
+              const startDate = document.getElementById("startDate").value;
+              const duration = document.getElementById("duration").value;
+
+              const orderDetails = {
+                startDate: startDate,
+                duration: parseInt(duration),
+                totalWeeks: parseInt(duration),
+                planType: "basic",
+                orderItems: [
+                  {
+                    mealName: "Grilled Chicken with Quinoa",
+                    day: "Monday",
+                    quantity: 1,
+                  },
+                ],
+              };
+
+              // Show loading state
+              const submitButton = event.target.querySelector(
+                'button[type="submit"]'
+              );
+              if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = "Processing...";
+              }
+
+              const result = await placeOrder(orderDetails);
+              alert("Order placed successfully!");
+              window.location.href = "dashboard.html";
+            } catch (error) {
+              console.error("Order error:", error);
+              alert(error.message);
+
+              if (
+                error.message.includes("Unable to retrieve user information")
+              ) {
+                localStorage.clear();
+                const loginUrl = `https://${
+                  config.COGNITO_DOMAIN
+                }/login?client_id=${
+                  config.COGNITO_CLIENT_ID
+                }&response_type=token+id_token&scope=email+openid&redirect_uri=${encodeURIComponent(
+                  config.REDIRECT_URI
+                )}`;
+                window.location.href = loginUrl;
+              }
+            } finally {
+              // Reset button state
+              const submitButton = event.target.querySelector(
+                'button[type="submit"]'
+              );
+              if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = "Place Order";
+              }
+            }
+          });
+        }
+
+        // Update auth button text on page load
+        await updateAuthButtonText();
+      });
+      window.handleHomeClick = async function (event) {
+        event.preventDefault();
+        try {
+          const userInfo = await getUserInfo();
+          window.location.href = userInfo ? "dashboard.html" : "index3.html";
+        } catch (error) {
+          console.error("Error checking auth status:", error);
+          window.location.href = "index3.html";
+        }
+      };
+
+      // Hamburger menu functionality
+      document.addEventListener("DOMContentLoaded", function () {
+        const hamburger = document.getElementById("hamburger");
+        const navLinks = document.querySelector(".nav-links");
+        const links = document.querySelectorAll(".nav-links a");
+
+        if (hamburger && navLinks) {
+          // Toggle menu when hamburger is clicked
+          hamburger.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent event from bubbling
+            navLinks.classList.toggle("active");
+          });
+
+          // Close menu when a link is clicked
+          links.forEach((link) => {
+            link.addEventListener("click", () => {
+              navLinks.classList.remove("active");
+            });
+          });
+
+          // Close menu when clicking outside
+          document.addEventListener("click", (e) => {
+            if (
+              navLinks.classList.contains("active") &&
+              !hamburger.contains(e.target) &&
+              !navLinks.contains(e.target)
+            ) {
+              navLinks.classList.remove("active");
+            }
+          });
+
+          // Prevent clicks inside the menu from closing it
+          navLinks.addEventListener("click", (e) => {
+            e.stopPropagation();
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

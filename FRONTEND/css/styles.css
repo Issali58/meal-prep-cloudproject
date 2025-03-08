@@ -1,0 +1,337 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+/* Navigation */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 5%;
+  background: rgba(
+    255,
+    255,
+    255,
+    0.1
+  ); /* Make nav background very transparent */
+  backdrop-filter: blur(5px); /* Add slight blur effect */
+  position: relative;
+  z-index: 2;
+  border: none; /* Remove any borders */
+  box-shadow: none; /* Remove any shadows */
+}
+
+.nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  border: none;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-left: auto;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: white; /* Change text color to white */
+  font-size: 0.9rem;
+  font-weight: 500; /* Make text slightly bolder */
+  transition: color 0.3s ease;
+}
+
+.phone {
+  color: white;
+}
+
+.book-btn {
+  background: #d35400;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Hero Section */
+.hero {
+  background: rgba(0, 0, 0, 0.5); /* Only overlay, remove the image */
+  background-size: cover;
+  background-position: center;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.breadcrumb {
+  font-size: 0.9rem;
+}
+
+.breadcrumb a {
+  color: white;
+  text-decoration: none;
+}
+
+/* Menu Section */
+.menu-section {
+  padding: 5rem 10%;
+  background: #1a1a1a;
+  color: white;
+  text-align: center;
+}
+
+.menu-section h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.menu-item {
+  background: #2a2a2a;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.menu-item img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.menu-content {
+  padding: 1.5rem;
+}
+
+.menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.price {
+  color: #d35400;
+  font-weight: bold;
+}
+
+.menu-content p {
+  color: #888;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+
+  .menu-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.signin-btn {
+  background: transparent; /* Make button semi-transparent */
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white; /* Change text color to white */
+  text-shadow: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.signin-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.signin-btn i {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* THE NEW ADDITIONS */
+.header-wrapper {
+  position: relative;
+  width: 100%;
+  background-image: url("../img/gettyimages-866584830-612x612.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: calc(300px + 70px); /* hero height + approximate nav height */
+}
+
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+
+  .menu-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero h1 {
+    font-size: 2rem; /* Smaller font size for mobile */
+  }
+
+  .header-wrapper {
+    min-height: calc(200px + 70px); /* Adjusted height for mobile */
+  }
+  .nav-links {
+    display: none; /* Hide links by default */
+    flex-direction: column; /* Stack links vertically */
+    position: fixed; /* Position it absolutely */
+    top: 60px; /* Adjust based on your nav height */
+    left: 0;
+    right: 0;
+    background: rgb(13, 10, 10); /* Background color */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 1000; /* Ensure it appears above other content */
+  }
+
+  .nav-links.active {
+    display: flex; /* Show links when active */
+  }
+
+  .hamburger {
+    display: block; /* Show hamburger icon on small screens */
+    color: #e3b04b;
+  }
+}
+
+/* DASHBOARD STYLES */
+/* Dashboard specific body background */
+.dashboard-page {
+  background-image: url("../img/gettyimages-866584830-612x612.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed; /* This makes the background image fixed while scrolling */
+  min-height: 100vh;
+}
+
+/* Dashboard Navigation Override */
+.dashboard-page .top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 5%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  position: fixed; /*Change to fixed position*/
+  top: 0; /* Position at top */
+  left: 0; /* Align to left edge */
+  right: 0; /* Align to right edge */
+  z-index: 2; /* Ensure nav stays on top */
+  border: none;
+  box-shadow: none;
+}
+/* Dashboard Container */
+.dashboard-container {
+  display: flex;
+  gap: 2rem;
+  padding: 2rem 5%;
+  background: #1a1a1a;
+}
+
+/* Dashboard Sidebar */
+.dashboard-sidebar {
+  width: 250px;
+  background: #2a2a2a;
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.dashboard-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dashboard-nav a {
+  color: white;
+  text-decoration: none;
+  padding: 0.8rem 1rem;
+  border-radius: 5px;
+  transition: background 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-nav a:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-nav a.active {
+  background: #d35400;
+}
+
+.dashboard-nav i {
+  width: 20px;
+}
+
+/* Dashboard Main Content */
+.dashboard-main {
+  flex: 1;
+  background: #2a2a2a;
+  border-radius: 10px;
+  padding: 2rem;
+  color: white;
+}
+.dashboard-header-wrapper {
+  position: relative;
+  width: 100%;
+  background-image: url("../img/gettyimages-866584830-612x612.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: calc(300px + 70px);
+  margin-top: 20px; /* Add margin to account for fixed nav height */
+}
+
+.dashboard-hero {
+  background: rgba(0, 0, 0, 0.5); /* Only overlay, remove the image */
+  background-size: cover;
+  background-position: center;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NutriGains</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      <!--
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      --
+    />
+    />
+    <style>
+      .logo {
+        color: #e3b04b;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        transition: color 0.3s ease;
+      }
+
+      .logo:hover {
+        color: #e3b04b;
+      }
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+      }
+      .hamburger {
+        display: none; /* Hidden by default */
+        cursor: pointer;
+        font-size: 24px;
+        color: #e3b04b;
+      }
+
+      .nav-links {
+        display: flex; /* Default to flex for larger screens */
+        flex-direction: row;
+      }
+      @media (max-width: 768px) {
+        .nav-links {
+          display: none; /* Hide links by default */
+          flex-direction: column; /* Stack links vertically */
+          position: absolute; /* Position it absolutely */
+          top: 60px; /* Adjust based on your nav height */
+          left: 0;
+          right: 0;
+          background: rgb(13, 10, 10); /* Background color */
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          z-index: 1000; /* Ensure it appears above other content */
+        }
+        .nav-links.active {
+          display: flex; /* Show links when active */
+        }
+
+        .hamburger {
+          display: block; /* Show hamburger icon on small screens */
+        }
+      }
+    </style>
+  </head>
+  <body class="dashboard-page">
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+      <div class="nav-container">
+        <div class="logo">NutriGains.</div>
+        <div class="hamburger" id="hamburger">
+          <i class="fas fa-bars"></i>
+        </div>
+        <div class="nav-links" id="navlinks">
+          <a href="#" class="active">HOME</a>
+          <a href="#">MENU</a>
+          <a href="#">BLOG</a>
+          <a href="#">CONTACT</a>
+          <span class="phone"><i class="fas fa-phone"></i> (256) 450-450</span>
+          <button class="signin-btn" id="signOutButton">
+            <i class="fas fa-user"></i>
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </div>
+      <!-- </nav> -->
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="dashboard-hero">
+      <h1>Our Menus</h1>
+      <div class="breadcrumb"><a href="#">Home</a> > Our Menus</div>
+    </header>
+
+    <!-- Menu Section -->
+    <section class="menu-section">
+      <h2>Discover Our Menus</h2>
+      <p>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris et massa
+        elit.
+      </p>
+
+      <div class="menu-grid">
+        <div class="menu-item">
+          <img
+            src="./img/istockphoto-1425395144-612x612.jpg"
+            alt="Fish Fillet"
+          />
+          <div class="menu-content">
+            <div class="menu-header">
+              <h3>
+                <a
+                  href="mealplan1.html"
+                  style="text-decoration: none; color: inherit"
+                  >Grilled Chicken</a
+                >
+              </h3>
+              <span class="price">$30</span>
+            </div>
+            <p>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris et
+              massa elit.
+            </p>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <img
+            src="./img/istockphoto-1281557348-612x612.jpg"
+            alt="Slated Chicken"
+          />
+          <div class="menu-content">
+            <div class="menu-header">
+              <h3>
+                <a
+                  href="mealplan2.html"
+                  style="text-decoration: none; color: inherit"
+                  >Grilled Salmon</a
+                >
+              </h3>
+              <span class="price">$30</span>
+            </div>
+            <p>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris et
+              massa elit.
+            </p>
+          </div>
+        </div>
+
+        <!-- Add more menu items following the same pattern -->
+      </div>
+    </section>
+
+    <script type="module">
+      // import Cognito configuration
+      import config from "./js/config.js";
+      const cognitoDomain = config.COGNITO_DOMAIN;
+      const clientId = config.COGNITO_CLIENT_ID;
+      const redirect_uri = config.redirect_uri;
+
+      // Add click handler to sign out button
+
+      // for the hamburger menu
+      document
+        .getElementById("hamburger")
+        .addEventListener("click", function () {
+          const navLinks = document.getElementById("navlinks");
+          navLinks.classList.toggle("active"); // Toggle the active class
+        });
+
+      document
+        .getElementById("signOutButton")
+        .addEventListener("click", function () {
+          // Clear any local storage if needed
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("idToken");
+          localStorage.removeItem("userEmail");
+
+          // Construct the Cognito hosted UI logout URL
+          const signOutUrl = `https://${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
+            redirect_uri
+          )}`;
+
+          // Redirect to Cognito hosted UI logout
+          window.location.href = signOutUrl;
+        });
+      // Add this to your dashboard.html
+      document.addEventListener("DOMContentLoaded", function () {
+        // Check for tokens in URL hash after Cognito redirect
+        if (window.location.hash) {
+          const hashParams = new URLSearchParams(
+            window.location.hash.substring(1)
+          );
+          const accessToken = hashParams.get("access_token");
+          const idToken = hashParams.get("id_token");
+
+          if (accessToken && idToken) {
+            // Store tokens
+            localStorage.setItem("accessToken", accessToken);
+            localStorage.setItem("idToken", idToken);
+
+            // Clean up URL
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname
+            );
+          }
+        }
+
+        // Check if user is authenticated
+        const accessToken = localStorage.getItem("accessToken");
+        if (!accessToken) {
+          // Redirect to login if no token found
+          const loginUrl = `https://${cognitoDomain}/login?client_id=${clientId}&response_type=token&scope=email+openid&redirect_uri=${encodeURIComponent(
+            redirect_uri
+          )}`;
+          window.location.href = loginUrl;
+        }
+      });
+    </script>
+  </body>
+</html>

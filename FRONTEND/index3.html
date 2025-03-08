@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resto - Our Menus</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      .header-wrapper {
+        position: relative;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        min-height: calc(300px + 70px);
+      }
+      .top-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: none;
+        z-index: 1000;
+      }
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      body {
+        padding-top: 0px; /* Adjust this value based on your nav height */
+      }
+      .logo {
+        color: #e3b04b;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        transition: color 0.3s ease;
+      }
+
+      .logo:hover {
+        color: #e3b04b;
+      }
+
+      .hamburger {
+        display: none; /* Hidden by default */
+        cursor: pointer;
+        font-size: 24px;
+        color: #e3b04b;
+      }
+
+      .nav-links {
+        display: flex; /* Default to flex for larger screens */
+        flex-direction: row;
+      }
+      @media (max-width: 768px) {
+        .nav-links {
+          display: none; /* Hide links by default */
+          flex-direction: column; /* Stack links vertically */
+          position: fixed; /* Position it absolutely */
+          top: 60px; /* Adjust based on your nav height */
+          left: 0;
+          right: 0;
+          background: rgb(13, 10, 10); /* Background color */
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          z-index: 1000; /* Ensure it appears above other content */
+        }
+        .nav-links.active {
+          display: flex; /* Show links when active */
+        }
+
+        .hamburger {
+          display: block; /* Show hamburger icon on small screens */
+        }
+      }
+    </style>
+  </head>
+  <body class="dashboard-page">
+    <!-- <div class="header-wrapper"> -->
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+      <div class="nav-container">
+        <div class="logo">NutriGains.</div>
+        <div class="hamburger" id="hamburger">
+          <i class="fas fa-bars"></i>
+        </div>
+        <div class="nav-links" id="navLinks">
+          <a href="#" class="active">HOME</a>
+          <a href="#">MENU</a>
+          <a href="#">BLOG</a>
+          <a href="#">CONTACT</a>
+          <span class="phone"><i class="fas fa-phone"></i> (256) 450-450</span>
+          <button
+            class="signin-btn"
+            id="authButton"
+            onclick="window.location.href='login.html'"
+          >
+            <i class="fas fa-user"></i>
+            <span>Sign In</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+      <h1>Our Menus</h1>
+      <div class="breadcrumb"><a href="#">Home</a> > Our Menus</div>
+    </header>
+    <!-- </div> -->
+
+    <!-- Menu Section -->
+    <section class="menu-section">
+      <h2>Discover Our Menus</h2>
+      <p>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris et massa
+        elit.
+      </p>
+
+      <div class="menu-grid">
+        <div class="menu-item">
+          <img
+            src="./img/gettyimages-866584830-612x612.jpg"
+            alt="Chicken Quinoa"
+          />
+          <div class="menu-content">
+            <div class="menu-header">
+              <h3>
+                <a
+                  href="mealplan1.html"
+                  style="text-decoration: none; color: inherit"
+                  >Chicken Quinoa</a
+                >
+              </h3>
+              <span class="price">$30</span>
+            </div>
+            <p>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris et
+              massa elit.
+            </p>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <img
+            src="./img/istockphoto-1036815628-612x612.jpg"
+            alt="Slated Chicken"
+          />
+          <div class="menu-content">
+            <div class="menu-header">
+              <h3>
+                <a
+                  href="mealplan2.html"
+                  style="text-decoration: none; color: inherit"
+                  >Grilled Salmon</a
+                >
+              </h3>
+              <span class="price">$30</span>
+            </div>
+            <p>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris et
+              massa elit.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script src="./js/login.js"></script>
+    <script src="./js/auth-check.js"></script>
+    <script>
+      document
+        .getElementById("hamburger")
+        .addEventListener("click", function () {
+          const navLinks = document.getElementById("navLinks");
+          navLinks.classList.toggle("active"); // Toggle the active class
+        });
+    </script>
+  </body>
+</html>

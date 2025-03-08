@@ -1,0 +1,152 @@
+:root {
+  --primary-color: #d35400;
+  --dark-bg: #1a1a1a;
+  --darker-bg: #141414;
+  --card-bg: #2a2a2a;
+  --text-light: #ffffff;
+  --text-gray: #888888;
+  --input-bg: #333333;
+  --input-border: #404040;
+  --error-color: #e74c3c;
+}
+
+* {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--dark-bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.screen-1 {
+  background: var(--card-bg);
+  padding: 2.5em;
+  border-radius: 20px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 100%;
+}
+
+.logo {
+  color: #e3b04b;
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 2em;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5em;
+}
+
+.email,
+.password {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  padding: 1em;
+  border-radius: 10px;
+}
+
+label {
+  color: var(--text-light);
+  font-size: 0.9em;
+  margin-bottom: 0.5em;
+  display: block;
+}
+
+input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-light);
+  width: 100%;
+  font-size: 0.9em;
+}
+
+input::placeholder {
+  color: var(--text-gray);
+}
+
+.login {
+  background: var(--primary-color);
+  color: var(--text-light);
+  padding: 1em;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.login:hover {
+  background: #e67e22;
+}
+
+.success-message {
+  color: #28a745;
+  text-align: center;
+  padding: 0.5em;
+  margin-top: 1em;
+  background: rgba(40, 167, 69, 0.1);
+  border-radius: 5px;
+}
+
+.error-message {
+  color: var(--error-color);
+  font-size: 0.8em;
+  text-align: center;
+  min-height: 1.2em;
+}
+
+/* Visibility control for forms */
+.auth-form.hidden {
+  display: none;
+}
+
+.auth-form.active {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+/* the additions */
+/* Add this to your existing CSS */
+.button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1em; /* Maintains consistent spacing with your existing gaps */
+  margin-top: 1em;
+}
+
+.login-btn {
+  background: var(--primary-color);
+  color: var(--text-light);
+  padding: 1em;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100%; /* Makes all buttons the same width */
+  max-width: 250px; /* Limits the button width */
+}
+
+.login-btn:hover {
+  background: #e67e22;
+}
+
+/* Update your existing .login class to .login-btn if you want to remove the old one */
+.login {
+  display: none; /* Hide the old class if not being used */
+}
