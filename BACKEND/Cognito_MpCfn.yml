@@ -1009,8 +1009,7 @@ Resources:
             Action:
               - "sts:AssumeRoleWithWebIdentity"
             Condition:
-              StringLike:
-                "token.actions.githubusercontent.com:sub: !Sub repo:${Issali58}/${meal-prep-cloudproject}:*
+              StringLike: "token.actions.githubusercontent.com:sub: !Sub repo:${Issali58}/${meal-prep-cloudproject}:*"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
 
