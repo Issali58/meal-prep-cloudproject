@@ -1,0 +1,82 @@
+name: Deploy Meal-Prep stack
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  AWS_REGION: us-east-1  # the region you are deploying ti
+  STACK_NAME: Cognito_MpCfn  # stack name
+  SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}  # Store sender email in GitHub secrets
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install cfn-lint
+      run: |
+        pip install cfn-lint
+
+    - name: Install cfn-nag
+      run: |
+        sudo gem install cfn-nag
+
+    - name: Run cfn-lint
+      run: |
+        cfn-lint "./BACKEND/Cognito MpCfn.yml"
+
+    - name: Run cfn-nag
+      run: |
+        cfn_nag_scan --input-path BACKEND/Cognito MpCfn.yml
+
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Create SSM Parameter
+      run: |
+        aws ssm put-parameter \
+          --name "/mealprep/sender-email" \
+          --value "${{ secrets.SENDER_EMAIL }}" \
+          --type "SecureString" \
+          --overwrite
+
+    - name: AWS CloudFormation Validate
+      run: |
+        aws cloudformation validate-template \
+          --template-body "file://./BACKEND/Cognito MpCfn.yml"
+
+    - name: Deploy CloudFormation Stack
+      uses: aws-actions/aws-cloudformation-github-deploy@v1
+      with:
+        name: ${{ env.STACK_NAME }}
+        template: "./BACKEND/Cognito MpCfn.yml"
+        parameter-overrides: >-
+          EnvironmentName=dev,
+          DynamodbtableName=MealPrepOrderTable2,
+          EmailDomainID=gmail.com
+        capabilities: CAPABILITY_NAMED_IAM
+        no-fail-on-empty-changeset: "1"
