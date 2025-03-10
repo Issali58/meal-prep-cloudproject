@@ -8,7 +8,7 @@ on:
 
 env:
   AWS_REGION: us-east-1  # the region you are deploying ti
-  STACK_NAME: Cognito MpCfn  # stack name
+  STACK_NAME: Cognito_MpCfn  # stack name
   SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}  # Store sender email in GitHub secrets
 
 jobs:
