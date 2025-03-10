@@ -1,0 +1,1016 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: MEAL PREP PROJECT FOR DELIEVERY AND CALORIE COUNTER
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    Description: Enter the environment name
+    AllowedValues:
+      - dev
+      - prod
+    ConstraintDescription: Must be development or production
+  DynamodbtableName:
+    Type: String
+    Default: MealPrepOrderTable2
+    Description: Enter the DynamoDB table name
+  EmailDomainID:
+    Type: String
+    Default: gmail.com
+    Description: Enter the email domain name
+  # to be used as a default while secured using ssm parameter
+  # store and github secrets
+  SenderEmailParameter:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: "/mealprep/sender-email"
+    Description: SSM parameter store for the sender email
+    NoEcho: true
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ["-", [!Ref EnvironmentName, "lambda-execution-role1"]]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName:
+            !Join ["-", [!Ref EnvironmentName, "lambda-execution-policy"]]
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dYnamodb:PutItem"
+                  - "dynamodb:UpdateItem"
+                  - "dynamodb:DeleteItem"
+                  - "dynamodb:GetItem"
+                  - "dynamodb:Scan"
+                  - "dynamodb:Query"
+                # Resource: arn:aws:dynamodb:*:*:table/*
+                # arn:aws:dynamodb:*:*:table/*
+                Resource: !GetAtt DynamodbTable.Arn
+        - PolicyName: CognitoAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "cognito-idp:AdminInitiateAuth"
+                  - "cognito-idp:AdminCreateUser"
+                  - "cognito-idp:AdminDeleteUser"
+                  - "cognito-idp:Listusers"
+                Resource: !GetAtt CognitoUserPool.Arn
+        - PolicyName: SESAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ses:GetTemplate
+                  - ses:ListTemplates
+                  - ses:SendEmail
+                  - ses:SendRawEmail
+                  - ses:SendTemplatedEmail
+                Resource:
+                  - Fn::Sub: "arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/*"
+                  - Fn::Sub: "arn:aws:ses:${AWS::Region}:${AWS::AccountId}:template/*"
+                  - Fn::Sub: "arn:aws:ses:${AWS::Region}:${AWS::AccountId}:configuration-set/*"
+              - Effect: Allow
+                Action:
+                  - ses:GetTemplate
+                  - ses:ListTemplates
+                Resource:
+                  "*"
+                  # - Fn::Sub: "arn:aws:ses:${AWS::Region}:${AWS::AccountId}:template/*"
+        - PolicyName: DynamoDBStreamAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dynamodb:DescribeStream"
+                  - "dynamodb:GetRecords"
+                  - "dynamodb:GetShardIterator"
+                  - "dynamodb:ListStreams"
+                Resource: !GetAtt DynamodbTable.StreamArn
+        - PolicyName: SSMParameterAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ssm:GetParameter"
+                  - "ssm:PutParameter"
+                  - "ssm:GetParameters"
+                  - "ssm:GetParametersByPath"
+                Resource:
+                  - "arn:aws:ssm:*:*:parameter/mealprep/*"
+        - PolicyName: Cloudformationaccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "cloudformation:CreateStack"
+                  - "cloudformation:DeleteStack"
+                  - "cloudformation:DescribeStacks"
+                  - "cloudformation:UpdateStack"
+                  - "cloudformation:validateTemplate"
+
+                Resource:
+                  - "*"
+  DynamodbTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref DynamodbtableName
+      AttributeDefinitions:
+        # userId which is the email
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: orderId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH #partition key
+        - AttributeName: orderId
+          KeyType: RANGE #sort key
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  Apigateway:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: MealPrepApi1
+      ProtocolType: HTTP
+
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+        AllowHeaders:
+          - "Authorization"
+          - "Content-Type"
+          - "*"
+  CreateOrderRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref Apigateway
+      RouteKey: "POST /OrdersTable"
+      AuthorizationType: JWT
+      AuthorizerId: !Ref ApiGatewayAuthorizer
+      Target: !Join
+        - "/"
+        - - "integrations"
+          - !Ref CreateOrderIntegration
+  ReadOrderRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref Apigateway
+      RouteKey: "GET /OrdersTable/{orderId}"
+      AuthorizationType: JWT
+      AuthorizerId: !Ref ApiGatewayAuthorizer
+      Target: !Join
+        - "/"
+        - - "integrations"
+          - !Ref ReadOrderIntegration
+  UpdateOrderRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref Apigateway
+      RouteKey: "PUT /OrdersTable/{orderId}"
+      AuthorizationType: JWT
+      AuthorizerId: !Ref ApiGatewayAuthorizer
+      Target: !Join
+        - "/"
+        - - "integrations"
+          - !Ref UpdateOrderIntegration
+  DeleteOrderRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref Apigateway
+      RouteKey: "DELETE /OrdersTable/{orderId}"
+      AuthorizationType: JWT
+      AuthorizerId: !Ref ApiGatewayAuthorizer
+      Target: !Join
+        - "/"
+        - - "integrations"
+          - !Ref DeleteOrderIntegration
+  CreateOrderIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref Apigateway
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt CreateOrderLambdaFunction.Arn
+      PayloadFormatVersion: "2.0"
+      IntegrationMethod: "POST"
+
+  ReadOrderIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref Apigateway
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt ReadOrderLambdaFunction.Arn
+      PayloadFormatVersion: "2.0"
+      IntegrationMethod: "GET"
+
+  UpdateOrderIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref Apigateway
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt UpdateOrderLambdaFunction.Arn
+      PayloadFormatVersion: "2.0"
+      IntegrationMethod: "PUT"
+
+  DeleteOrderIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref Apigateway
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt DeleteOrderLambdaFunction.Arn
+      PayloadFormatVersion: "2.0"
+      IntegrationMethod: "DELETE"
+
+  DevApiGatewayStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref Apigateway
+      StageName: "dev"
+      AutoDeploy: true
+      AccessLogSettings:
+        DestinationArn: !GetAtt ApiGatewayLogGroup.Arn
+        Format: "$context.requestId"
+  ProdApiGatewayStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref Apigateway
+      StageName: "prod"
+      AutoDeploy: false
+      # DeploymentId: !Ref DevApiGatewayStage
+      # StageVariables:
+      #   lambdaAlias: "prod"
+
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Join ["-", [!Ref EnvironmentName, "user-pool"]]
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
+
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+  CognitoUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      Domain: resto-auth
+
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Join ["-", [!Ref EnvironmentName, "user-pool-client"]]
+      UserPoolId: !Ref CognitoUserPool
+      AllowedOAuthFlows:
+        - implicit
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+      # for devt with the application endpoint yse the format
+      # "https://your-app-domain.com/callback"
+      # since we are in local web devt, use of the localhost url
+      CallbackURLs:
+        - "http://localhost:3000/dashboard.html"
+      SupportedIdentityProviders:
+        - COGNITO
+      LogoutURLs:
+        - "http://localhost:3000/index3.html"
+      AllowedOAuthFlowsUserPoolClient: true
+  ApiGatewayAuthorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties:
+      Name: !Join ["-", [!Ref EnvironmentName, "cognito-authorizer"]]
+      ApiId: !Ref Apigateway
+      AuthorizerType: JWT
+      IdentitySource:
+        - "$request.header.Authorization"
+      JwtConfiguration:
+        Audience:
+          - !Ref CognitoUserPoolClient
+        Issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}
+
+  # lambda function resources
+  CreateOrderLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join ["-", [!Ref EnvironmentName, "CreateOrder"]]
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python3.8
+      Timeout: 30
+      Environment:
+        Variables:
+          DYNAMODB_TABLE_NAME: !Ref DynamodbtableName
+          SENDER_EMAIL: !Ref SenderEmailParameter
+          EMAIL_DOMAIN_ID: !Ref EmailDomainID
+      Code:
+        ZipFile: |
+          import os
+          import json
+          import boto3
+          import uuid
+          from decimal import Decimal
+          from datetime import datetime
+
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table(os.environ['DYNAMODB_TABLE_NAME'])
+          ses = boto3.client('ses')   
+
+          def handler(event, context):
+            try:
+              # extract user info from the JWT claims
+              authorizer = event['requestContext']['authorizer']
+              claims = authorizer['jwt']['claims']
+            
+              print(f"JWT claims: {claims}")
+              
+              # Extract user information from JWT claims
+              user_email = claims.get('email')
+              user_name = (claims.get('name') or
+                  claims.get('cognito:username') or
+                  claims.get('given_name'))
+              print(f"User email: {user_email}, User name: {user_name}")
+
+              # this extracts the user id from the cognito token of the payload
+              user_id = claims.get('sub')
+
+              if user_id is None:
+                return {
+                  'statusCode': 401,
+                  'body': json.dumps({'error': 'User ID not authenticated'})
+                }
+
+              # Extract order details from the request body
+              # this extraction is robust to extract both 
+                # json and dictionary payload structure
+              body = event.get('body', {})
+              # order_details = body['order_details']
+              print(f"Received event: {json.dumps(event)}")
+
+              # Check if 'body' exists in the event
+              if 'body' not in event:
+                raise KeyError("'body' not found in the event")
+
+              # Extract the order details from the request body
+              # order_details = json.loads(event['body'])
+              body = event['body']
+              if isinstance(body, str):
+                order_details = json.loads(body)
+              elif isinstance(body, dict):
+                order_details = body
+              else:
+                raise ValueError(f"Unexpected body type: {type(body)}")
+              # Convert float prices to Decimal
+              for item in order_details['orderItems']:
+                if 'price' in item:
+                  item['price'] = Decimal(str(item['price']))
+                if 'quantity' in item:
+                  item['quantity'] = Decimal(str(item['quantity']))
+              
+              # Check for required fields
+              required_fields = ['planType', 'orderItems' , 'startDate', 'duration', 'totalWeeks']
+              missing_fields = [field for field in required_fields if field not in order_details]
+              if missing_fields:
+                raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
+              
+              # Generate a unique order ID
+              order_id = str(uuid.uuid4())
+
+              # Add the userId, order ID and timestamp to the order details
+              order_details['userId'] = user_id
+              order_details['orderId'] = order_id
+              order_details['timestamp'] = str(datetime.now())
+              order_details['customerName'] = user_name
+
+              # Save the order details to the DynamoDB table
+              table.put_item(Item = order_details)
+
+              print(f"Processing order for customer: {user_name}")
+              
+              # Return the order ID in the response
+              response = {
+                  'statusCode': 200,
+                  'body': json.dumps(order_details, default=str),
+                  'orderItems': order_details['orderItems']
+              }
+              return response
+            except Exception as e:
+              # Return an error response if something goes wrong
+              response = {
+                  'statusCode': 500,
+                  'body': json.dumps({'error in order creation': str(e)})
+              }
+              return response
+
+  ReadOrderLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join ["-", [!Ref EnvironmentName, "ReadOrder-lambda"]]
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python3.8
+      Timeout: 30
+      Environment:
+        Variables:
+          DYNAMODB_TABLE_NAME: !Ref DynamodbtableName
+      Code:
+        ZipFile: |
+          import os
+          import json
+          import boto3
+          import uuid
+          from datetime import datetime
+          from botocore.exceptions import ClientError
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table(os.environ['DYNAMODB_TABLE_NAME'])
+
+          def handler(event, context):
+              print(f"Received event: {json.dumps(event)}")
+              
+              try:
+                # extract the order ID from the JWT claims
+                requestContext = event.get('requestContext', {})
+                authorizer = event['requestContext']['authorizer']
+                claims = authorizer['jwt']['claims']
+                
+                # obtain the user id from the cognito token from the payload
+                user_id = claims['sub']
+                # order_id = event['pathParameters']['orderId']
+              except (KeyError, TypeError):
+                  return {
+                      'statusCode': 400,
+                      'body': json.dumps({'error': 'Missing or invalid orderId in path parameters'})
+                  }
+
+              try:
+                  response = table.get_item(
+                  Key={'orderId': order_id},
+                  ProjectionExpression='orderId,#ts,orderItems',
+                  ExpressionAttributeNames={'#ts': 'timestamp'})
+                  # use of the projection expressions to only request orderid and timestamp
+                  # the expression attribbutename is used as timestamp is a reserved word
+                  
+                  if 'Item' in response:
+                      return {
+                          'statusCode': 200,
+                          'body': json.dumps(response['Item'], default=str)
+                      }
+                  else:
+                      return {
+                          'statusCode': 404,
+                          'body': json.dumps({'error': f'Order with id {order_id} not found'})
+                      }
+              
+              except ClientError as e:
+                  print(f"DynamoDB error: {e.response['Error']['Message']}")
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({'error': 'Could not retrieve order'})
+                  }
+              except Exception as e:
+                  print(f"Unexpected error: {str(e)}")
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({'error': 'An unexpected error occurred'})
+                  }
+
+  UpdateOrderLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join ["-", [!Ref EnvironmentName, "UpdateOrder-lambda"]]
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python3.8
+      Timeout: 30
+      Environment:
+        Variables:
+          DYNAMODB_TABLE_NAME: !Ref DynamodbtableName
+      Code:
+        ZipFile: |
+          import os
+          import json
+          import boto3
+          import uuid
+          from datetime import datetime
+          from botocore.exceptions import ClientError
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table(os.environ['DYNAMODB_TABLE_NAME'])    
+
+          def handler(event, context):
+            print(f"Received event: {json.dumps(event)}")
+            
+            try:
+                # Extract user information from the JWT claims
+                authorizer = event['requestContext']['authorizer']
+                claims = authorizer['jwt']['claims']
+                user_id = claims['sub']
+
+                # Extract the order ID from the path parameters
+                order_id = event['pathParameters']['orderId']
+                
+                # Parse the request body
+                body = json.loads(event['body'])
+                
+                try:
+                  verify_response = table.get_item(
+                    Key={
+                          'userId': user_id,
+                          'orderId': order_id
+                      }
+                    )
+            
+                  if 'Item' not in verify_response:
+                    return {
+                        'statusCode': 404,
+                        'body': json.dumps({'error': 'Order not found or unauthorized'})
+                      }
+
+                # Prepare the update expression and attribute values
+                update_expression = "SET "
+                expression_attribute_values = {}
+                expression_attribute_names = {}
+                
+                for key, value in body.items():
+                    if key != 'orderId':  # Skip orderId as it's the primary key
+                        update_expression += f"#{key} = :{key}, "
+                        expression_attribute_values[f":{key}"] = value
+                        expression_attribute_names[f"#{key}"] = key
+                
+                update_expression += "updatedAt = :updatedAt"
+                expression_attribute_values[":updatedAt"] = datetime.now().isoformat()
+                
+                # Remove the trailing comma and space
+                update_expression = update_expression.rstrip(", ")
+                
+                # Update the item in the DynamoDB table
+                response = table.update_item(
+                    Key={'orderId': order_id},
+                    UpdateExpression=update_expression,
+                    ExpressionAttributeValues=expression_attribute_values,
+                    ExpressionAttributeNames=expression_attribute_names,
+                    ReturnValues="ALL_NEW"
+                )
+                
+                return {
+                    'statusCode': 200,
+                    'body': json.dumps(response['Attributes'], default=str)
+                }
+                
+            except ClientError as e:
+                print(f"DynamoDB error: {e.response['Error']['Message']}")
+                return {
+                    'statusCode': 500,
+                    'body': json.dumps({'error': 'Could not update order'})
+                }
+            except KeyError as e:
+                print(f"KeyError: {str(e)}")
+                return {
+                    'statusCode': 400,
+                    'body': json.dumps({'error': 'Missing required field'})
+                }
+            except json.JSONDecodeError:
+                return {
+                    'statusCode': 400,
+                    'body': json.dumps({'error': 'Invalid JSON in request body'})
+                }
+            except Exception as e:
+                print(f"Unexpected error: {str(e)}")
+                return {
+                    'statusCode': 500,
+                    'body': json.dumps({'error': 'An unexpected error occurred'})
+                }
+
+  DeleteOrderLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join ["-", [!Ref EnvironmentName, "DeleteOrder-lambda"]]
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python3.8
+      Timeout: 30
+      Environment:
+        Variables:
+          DYNAMODB_TABLE_NAME: !Ref DynamodbtableName
+      Code:
+        ZipFile: |
+          import os
+          import json
+          import boto3
+          import uuid
+          from datetime import datetime
+          from botocore.exceptions import ClientError
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table(os.environ['DYNAMODB_TABLE_NAME'])
+
+          def handler(event, context):
+            print(f"Received event: {json.dumps(event)}")       
+            try:           
+              # Validate event structure
+              # Extract user information from the JWT claims
+              if not event.get('requestContext', {}).get('authorizer', {}).get('jwt', {}).get('claims'):
+                  return {
+                    'statusCode': 401,
+                    'body': json.dumps({'error': 'Missing authentication'})
+                   }
+              claims = event['requestContext']['authorizer']['jwt']['claims']
+              user_id = claims['sub']  # Get the Cognito user ID (sub)
+
+              # Get orderId from path parameters
+              if not event.get('pathParameters') or 'orderId' not in event['pathParameters']:
+                  return {
+                    'statusCode': 400,
+                    'body': json.dumps({'error': 'orderId is required in path parameters'})
+                  }
+
+              order_id = event['pathParameters']['orderId']
+              print(f"Attempting to delete order {order_id} for user {user_id}")
+
+              try:
+                verify_response = table.get_item(
+                  Key={
+                    'userId': user_id,
+                    'orderId': order_id
+                  }
+                )
+                if 'Item' not in verify_response:
+                  return {
+                    'statusCode': 404,
+                    'body': json.dumps({'error': f'Order {order_id} not found for user {user_id}'})
+                  }
+                
+                # Delete the order record
+                delete_response = table.delete_item(
+                  Key={
+                    'userId': user_id,
+                    'orderId': order_id
+                  },
+                  ReturnValues='ALL_OLD'  # This will return the deleted item
+                )
+
+                if 'Attributes' not in delete_response:
+                  return {
+                    'statusCode': 404,
+                    'body': json.dumps({'error': f'Order {order_id} not found for user {user_id}'})
+                  }
+                return {
+                  'statusCode': 200,
+                  'body': json.dumps({
+                    'message': f'Order {order_id} successfully deleted',
+                    'deletedOrder': delete_response['Attributes']
+                  }, default=str)
+                }
+            
+            except Exception as e:
+                print(f"General error: {str(e)}")
+                return {
+                    'statusCode': 500,
+                    'body': json.dumps({'error': 'Internal server error'})
+                  }
+
+  EmailConfirmationTemplate:
+    Type: AWS::SES::Template
+    Properties:
+      Template:
+        TemplateName:
+          !Join ["-", [!Ref EnvironmentName, "order-confirmation-template"]]
+        SubjectPart: "Order Confirmation"
+        TextPart: |
+          Dear customer,
+          Thank you for your order and we notify you on its arrival!
+
+          Order Details:
+          Order ID: {{orderId}}
+
+          Best regards,
+          Your Cloud Team
+        HtmlPart: |
+          <html>
+          <head></head>
+          <body>
+            <h1>Order Confirmation</h1>
+            <p>Dear customer,</p>
+            <p>Thank you for your order and we notify you on its arrival!</p>
+            
+            <h2>Order Details:</h2>
+            <ul>
+               <li><strong>Order ID:</strong> {{orderId}}</li>
+            </ul>
+            <p>Best regards,<br>Your Cloud Team</p>
+          </body>
+          </html>
+
+  # an order notification function for the SES to send emails
+  OrderNotificationLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName:
+        !Join ["-", [!Ref EnvironmentName, "OrderNotification-lambda"]]
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python3.8
+      Environment:
+        Variables:
+          SES_SOURCE_EMAIL: !Ref SenderEmailParameter
+          EMAIL_TEMPLATE_NAME:
+            !Join ["-", [!Ref EnvironmentName, "order-confirmation-template"]]
+          EMAIL_CONFIG_SET_NAME:
+            !Join ["-", [!Ref EnvironmentName, "order-emails-config"]]
+      Timeout: 30
+      Code:
+        ZipFile: |
+          import json
+          import os
+          import boto3
+          from botocore.exceptions import ClientError
+
+          # intialize the ses client
+          ses_client = boto3.client('ses')
+
+          def handler(event, context):
+            print(f"Received event: {json.dumps(event)}")
+            print(f"Environment variables:")
+            print(f"EMAIL_TEMPLATE_NAME: {os.environ.get('EMAIL_TEMPLATE_NAME')}")
+            print(f"SES_SOURCE_EMAIL: {os.environ.get('SES_SOURCE_EMAIL')}")
+           
+            try:
+                for record in event['Records']:
+                  if record['eventName'] == 'INSERT':
+                    print(f"Processing record: {json.dumps(record)}")
+                    
+                    new_image = record['dynamodb']['NewImage']
+                    print(f"New image structure: {json.dumps(new_image)}")
+                    
+                    # More careful extraction of values with detailed logging
+                    try:
+                        # Extract user email with logging
+                        if 'email' in new_image:
+                            user_email = new_image['email'].get('S', '')
+                            print(f"Found email in 'email' field: {user_email}")
+                        elif 'userId' in new_image:
+                            user_email = new_image['userId'].get('S', '')
+                            print(f"Found email in 'userId' field: {user_email}")
+                        else:
+                            print("No email field found in record")
+                            print(f"Available fields: {list(new_image.keys())}")
+                            raise KeyError("No email field found in record")
+
+                        # Extract customer name with logging
+                        if 'customerName' in new_image:
+                            customer_name = new_image['customerName'].get('S', user_email)
+                            print(f"Found customer name: {customer_name}")
+                        else:
+                            customer_name = user_email
+                            print(f"No customer name found, using email: {customer_name}")
+
+                        # Extract order ID with logging
+                        order_id = new_image['orderId'].get('S', 'Unknown Order ID')
+                        print(f"Order ID: {order_id}")
+
+                        # Extract timestamp with logging
+                        timestamp = new_image.get('timestamp', {}).get('S', '')
+                        print(f"Timestamp: {timestamp}")
+
+                        order_details = {
+                            'customerName': customer_name,
+                            'orderId': order_id,
+                            'orderDate': timestamp
+                        }
+
+                        # Handle orderItems with detailed logging
+                        print("Processing orderItems")
+                        if 'orderItems' in new_image:
+                            order_items = new_image['orderItems']
+                            print(f"Raw orderItems: {json.dumps(order_items)}")
+                            
+                            if isinstance(order_items, dict):
+                                if 'L' in order_items:
+                                    order_details['orderItems'] = order_items['L']
+                                elif 'S' in order_items:
+                                    try:
+                                        order_details['orderItems'] = json.loads(order_items['S'])
+                                    except json.JSONDecodeError as e:
+                                        print(f"Failed to parse orderItems string: {e}")
+                                        order_details['orderItems'] = order_items['S']
+                                elif 'M' in order_items:  # Handle Map type
+                                    order_details['orderItems'] = order_items['M']
+                                else:
+                                    print(f"Unexpected orderItems format. Keys: {list(order_items.keys())}")
+                                    order_details['orderItems'] = str(order_items)
+                            else:
+                                print(f"orderItems is not a dict: {type(order_items)}")
+                                order_details['orderItems'] = str(order_items)
+                        else:
+                            print("No orderItems found in record")
+                            order_details['orderItems'] = []
+
+                        print(f"Final order details: {json.dumps(order_details)}")
+
+                        template_data = {
+                            'customerName': order_details['customerName'],
+                            'orderId': order_details['orderId'],
+                            'orderDate': order_details['orderDate'],
+                            'orderItems': json.dumps(order_details['orderItems'])
+                        }
+
+                        print(f"Prepared template data: {json.dumps(template_data)}")
+                        print(f"Sending email to: {user_email}")
+                        
+                        response = ses_client.send_templated_email(
+                            Source=os.environ['SES_SOURCE_EMAIL'],
+                            Destination={
+                                'ToAddresses': [user_email]
+                            },
+                            Template=os.environ['EMAIL_TEMPLATE_NAME'],
+                            TemplateData=json.dumps(template_data)
+                        )
+                        
+                        print(f"Email sent successfully. MessageId: {response['MessageId']}")
+
+                    except KeyError as e:
+                        print(f"KeyError while processing record: {str(e)}")
+                        print(f"Record structure: {json.dumps(record)}")
+                        continue  # Skip this record and continue with the next one
+
+                return {
+                'statusCode': 200,
+                'body': json.dumps({'message': 'Order notification processing completed'})
+                }
+
+            except ses_client.exceptions.TemplateDoesNotExistException:
+              print(f"Template '{os.environ['EMAIL_TEMPLATE_NAME']}' does not exist!")
+              return {
+                  'statusCode': 500,
+                  'body': json.dumps({'error': 'Email template does not exist'})
+              }
+            except ClientError as e:
+              print(f"Error sending email: {str(e)}")
+              return {
+                  'statusCode': 500,
+                  'body': json.dumps({'error': 'Could not send order notification'})
+              }
+            except Exception as e:
+              print(f"Unexpected error: {str(e)}")
+              print(f"Event: {json.dumps(event)}")
+              return {
+                'statusCode': 500,
+                'body': json.dumps({'error': f'An unexpected error occurred: {str(e)}'})
+              }
+
+  OrderNotificationEventMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 2
+      Enabled: true
+      EventSourceArn: !GetAtt DynamodbTable.StreamArn
+      FunctionName: !GetAtt OrderNotificationLambdaFunction.Arn
+      StartingPosition: LATEST
+
+  # lambdaPermission resources for the create,read,update
+  # and delete function each resource has its own lambda function
+  CreateOrderLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt CreateOrderLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${Apigateway}/${DevApiGatewayStage}/POST/*"
+      # SourceArn: !Join
+      #   - "/"
+      #   - - "arn:aws:execute-api:"
+      #     - !Ref AWS::Region
+      #     - !Ref AWS::AccountId
+      #     - !Ref Apigateway
+      #     - "*"
+      #     - "*"
+  ReadOrderLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt ReadOrderLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${Apigateway}/${DevApiGatewayStage}/GET/*"
+  UpdateOrderLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt UpdateOrderLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${Apigateway}/${EnvironmentName}/PUT/OrdersTable/*"
+
+  DeleteOrderLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt DeleteOrderLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${Apigateway}/${EnvironmentName}/DELETE/OrdersTable/*"
+      # SourceArn: !Join
+      #   - "/"
+      #   - - "arn:aws:execute-api:"
+      #     - !Ref AWS::Region
+      #     - !Ref AWS::AccountId
+      #     - !Ref Apigateway
+      #     - !Ref DevApiGatewayStage
+      #     - "/DELETE/OrdersTable/*"
+  # SES domain identity
+  OrderNotificationLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt OrderNotificationLambdaFunction.Arn
+      Principal: dynamodb.amazonaws.com
+      SourceArn: !GetAtt DynamodbTable.StreamArn
+
+  SesDomainIdentity:
+    Type: AWS::SES::EmailIdentity
+    Properties:
+      EmailIdentity: !Ref SenderEmailParameter
+
+  EmailConfigSet:
+    Type: AWS::SES::ConfigurationSet
+    Properties:
+      Name: !Join ["-", [!Ref EnvironmentName, "order-emails-config"]]
+
+  # TEMPLATE FOR THE ORDER CONFIRMATION EMAIL
+
+  ApiGatewayLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ["-", [!Ref EnvironmentName, "api-gateway-logs12"]]
+      RetentionInDays: 7
+
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ["-", [!Ref EnvironmentName, "lambda-logs12"]]
+      RetentionInDays: 7
+
+Outputs:
+  CreateOrderendpointUrl:
+    Description: API Gateway endpoint URL for the create order
+    Value: !Sub "https://${Apigateway}.execute-api.${AWS::Region}.amazonaws.com/${DevApiGatewayStage}/OrdersTable"
+  ReadOrderendpointUrl:
+    Description: API Gateway endpoint URL for the read order
+    Value: !Sub "https://${Apigateway}.execute-api.${AWS::Region}.amazonaws.com/${DevApiGatewayStage}/OrdersTable/{orderId}"
+  UpdateOrderendpointUrl:
+    Description: API Gateway endpoint URL for the update order
+    Value: !Sub "https://${Apigateway}.execute-api.${AWS::Region}.amazonaws.com/${DevApiGatewayStage}/OrdersTable/{orderId}"
+  DeleteOrderendpointUrl:
+    Description: API Gateway endpoint URL for the delete order
+    Value: !Sub "https://${Apigateway}.execute-api.${AWS::Region}.amazonaws.com/${DevApiGatewayStage}/OrdersTable/{orderId}"
+
+  UserPoolId:
+    Description: The Cognito User Pool ID
+    Value: !Ref CognitoUserPool
+  UserPoolClientId:
+    Description: The Cognito User Pool Client ID
+    Value: !Ref CognitoUserPoolClient
+    # LambdaFunctionArn:
+  #   Description: ARN of the Lambda function
+
+  #
