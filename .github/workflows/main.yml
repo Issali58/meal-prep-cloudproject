@@ -57,13 +57,20 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
+    - name: Deploy OIDC Provider Stack
+      uses: aws-actions/aws-cloudformation-github-deploy@v1
+      with:
+        name: oidc-provider-stack
+        template: OIDC_stack.yml  
+        capabilities: CAPABILITY_NAMED_IAM
+        no-fail-on-empty-changeset: "1"  
         
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
         aws-region: ${{ env.AWS_REGION }}
-
+          
     - name: Create SSM Parameter
       run: |
         aws ssm put-parameter \
