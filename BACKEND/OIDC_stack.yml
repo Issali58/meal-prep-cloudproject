@@ -5,7 +5,7 @@ Resources:
   GitHubOIDCProvider:
     Type: AWS::IAM::OIDCProvider
     Properties:
-      Url: https://token.actions.githubusercontent.com
+      Url: token.actions.githubusercontent.com
       ClientIdList:
         - sts.amazonaws.com
       ThumbprintList:
@@ -22,7 +22,7 @@ Resources:
             Action: sts:AssumeRoleWithWebIdentity
             Condition:
               StringLike:
-                token.actions.githubusercontent.com:sub: repo:Issali58/meal-prep-cloudproject:*
+                "token.actions.githubusercontent.com:sub": "repo:Issali58/meal-prep-cloudproject:*"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
 Outputs:
