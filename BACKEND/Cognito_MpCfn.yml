@@ -341,7 +341,7 @@ Resources:
       FunctionName: !Join ["-", [!Ref EnvironmentName, "CreateOrder"]]
       Handler: index.handler
       Role: !GetAtt LambdaExecutionRole.Arn
-      Runtime: python3.11
+      Runtime: python3.13
       Timeout: 30
       Environment:
         Variables:
@@ -453,7 +453,7 @@ Resources:
       FunctionName: !Join ["-", [!Ref EnvironmentName, "ReadOrder-lambda"]]
       Handler: index.handler
       Role: !GetAtt LambdaExecutionRole.Arn
-      Runtime: python3.11
+      Runtime: python3.13
       Timeout: 30
       Environment:
         Variables:
@@ -525,7 +525,7 @@ Resources:
       FunctionName: !Join ["-", [!Ref EnvironmentName, "UpdateOrder-lambda"]]
       Handler: index.handler
       Role: !GetAtt LambdaExecutionRole.Arn
-      Runtime: python3.11
+      Runtime: python3.13
       Timeout: 30
       Environment:
         Variables:
@@ -631,7 +631,7 @@ Resources:
       FunctionName: !Join ["-", [!Ref EnvironmentName, "DeleteOrder-lambda"]]
       Handler: index.handler
       Role: !GetAtt LambdaExecutionRole.Arn
-      Runtime: python3.11
+      Runtime: python3.13
       Timeout: 30
       Environment:
         Variables:
@@ -752,7 +752,7 @@ Resources:
         !Join ["-", [!Ref EnvironmentName, "OrderNotification-lambda"]]
       Handler: index.handler
       Role: !GetAtt LambdaExecutionRole.Arn
-      Runtime: python3.11
+      Runtime: python3.13
       Environment:
         Variables:
           SES_SOURCE_EMAIL: !Ref SenderEmailParameter
