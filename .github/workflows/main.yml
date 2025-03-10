@@ -8,7 +8,7 @@ on:
 
 env:
   AWS_REGION: us-east-1  # the region you are deploying ti
-  STACK_NAME: Cognito_MpCfn  # stack name
+  STACK_NAME: CognitoMpCfn  # stack name
   SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}  # Store sender email in GitHub secrets
 
 jobs:
@@ -33,11 +33,11 @@ jobs:
 
     - name: Run cfn-lint
       run: |
-        cfn-lint "./BACKEND/Cognito MpCfn.yml"
+        cfn-lint "./BACKEND/Cognito_MpCfn.yml"
 
     - name: Run cfn-nag
       run: |
-        cfn_nag_scan --input-path BACKEND/Cognito MpCfn.yml
+        cfn_nag_scan --input-path BACKEND/Cognito_MpCfn.yml
 
   deploy:
     needs: validate
@@ -67,13 +67,13 @@ jobs:
     - name: AWS CloudFormation Validate
       run: |
         aws cloudformation validate-template \
-          --template-body "file://./BACKEND/Cognito MpCfn.yml"
+          --template-body "file://./BACKEND/Cognito_MpCfn.yml"
 
     - name: Deploy CloudFormation Stack
       uses: aws-actions/aws-cloudformation-github-deploy@v1
       with:
         name: ${{ env.STACK_NAME }}
-        template: "./BACKEND/Cognito MpCfn.yml"
+        template: "./BACKEND/Cognito_MpCfn.yml"
         parameter-overrides: >-
           EnvironmentName=dev,
           DynamodbtableName=MealPrepOrderTable2,
