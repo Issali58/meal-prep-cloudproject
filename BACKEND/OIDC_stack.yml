@@ -5,7 +5,7 @@ Resources:
   GitHubOIDCProvider:
     Type: AWS::IAM::OIDCProvider
     Properties:
-      Url: token.actions.githubusercontent.com
+      Url: https://token.actions.githubusercontent.com
       ClientIdList:
         - sts.amazonaws.com
       ThumbprintList:
