@@ -91,7 +91,7 @@ jobs:
         name: ${{ env.STACK_NAME }}
         template: "./BACKEND/Cognito_MpCfn.yml"
         parameter-overrides: >-
-          SenderEmailParameter='${{ secrets.SENDER_EMAIL }}',
+          SenderEmailParameter= ${{ secrets.SENDER_EMAIL }},
           EnvironmentName=dev,
           DynamodbtableName=MealPrepOrderTable2,
           EmailDomainID=gmail.com
