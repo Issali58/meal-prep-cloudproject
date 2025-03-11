@@ -989,30 +989,6 @@ Resources:
     Properties:
       LogGroupName: !Join ["-", [!Ref EnvironmentName, "lambda-logs12"]]
       RetentionInDays: 7
-  GitHubOIDCProvider:
-    Type: AWS::IAM::OIDCProvider
-    Properties:
-      Url: https://token.actions.githubusercontent.com
-      ClientIdList:
-        - sts.amazonaws.com
-      ThumbprintList:
-        - "6938fd4d98bab03faadb97b34396831e3780aea1"
-  GitHubActionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Federated: !Ref GitHubOIDCProvider
-            Action:
-              - "sts:AssumeRoleWithWebIdentity"
-            Condition:
-              StringLike:
-                token.actions.githubusercontent.com:sub: repo:Issali58/meal-prep-cloudproject:*
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AdministratorAccess
 
 Outputs:
   CreateOrderendpointUrl:
