@@ -76,7 +76,7 @@ jobs:
       run: |
         aws ssm put-parameter \
           --name "/mealprep/sender-email" \
-          --value "${{ secrets.SENDER_EMAIL }}" \
+          --value "\"${{ secrets.SENDER_EMAIL }}\"" \
           --type "SecureString" \
           --overwrite
 
