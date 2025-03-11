@@ -77,7 +77,7 @@ jobs:
         aws ssm put-parameter \
           --name "/mealprep/sender-email" \
           --value "\"${{ secrets.SENDER_EMAIL }}\"" \
-          --type "SecureString" \
+          --type "String" \
           --overwrite
 
     - name: AWS CloudFormation Validate
