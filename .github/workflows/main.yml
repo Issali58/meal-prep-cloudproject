@@ -92,6 +92,7 @@ jobs:
         template: "./BACKEND/Cognito_MpCfn.yml"
         parameter-overrides: >-
           EnvironmentName=dev,
+          SenderEmailParameter='${{ secrets.SENDER_EMAIL }}',
           DynamodbtableName=MealPrepOrderTable2,
           EmailDomainID=gmail.com
         capabilities: CAPABILITY_NAMED_IAM
