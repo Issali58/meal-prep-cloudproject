@@ -1013,4 +1013,4 @@ Outputs:
     # LambdaFunctionArn:
   CognitoDomainUrl:
     Description: The Cognito Domain URL for the hosted UI access
-    Value: !Sub "https://${CognitoUserPoolDomain.Domain}.auth.${AWS::Region}.amazoncognito.com"
+    Value: !Sub "https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
