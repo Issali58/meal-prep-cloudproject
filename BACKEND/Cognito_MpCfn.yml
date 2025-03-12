@@ -1011,6 +1011,6 @@ Outputs:
     Description: The Cognito User Pool Client ID
     Value: !Ref CognitoUserPoolClient
     # LambdaFunctionArn:
-  #   Description: ARN of the Lambda function
-
-  #
+  CognitoDomainUrl:
+    Description: The Cognito Domain URL for the hosted UI access
+    Value: !Sub "https://${CognitoUserPoolDomain.Domain}.auth.${AWS::Region}.amazoncognito.com"
