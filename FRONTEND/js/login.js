@@ -1,5 +1,5 @@
 AWS.config.region = "us-east-1";
-import config from "./config.js";
+import config from "../js/config.js";
 const poolData = {
   UserPoolIsd: config.USERPOOLID, // Replace with your User Pool ID
   ClientId: config.COGNITO_CLIENT_ID, // Replace with your App Client ID
