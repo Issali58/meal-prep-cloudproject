@@ -29,7 +29,8 @@
       </div>
     </div>
 
-    <script>
+    <script type="module">
+      import config from "./config.js";
       // Add this function to handle the Cognito callback
       function handleAuthCallback() {
         // Get the fragments from the URL
@@ -68,9 +69,12 @@
       });
 
       document.addEventListener("DOMContentLoaded", function () {
-        const cognitoDomain = "resto-auth.auth.us-east-1.amazoncognito.com";
-        const clientId = "16g32no3p69nb8sp6qi55fmoj4";
-        const redirectUri = "http://localhost:3000/dashboard.html";
+        const cognitoDomain = config.COGNITO_DOMAIN;
+        // "resto-auth.auth.us-east-1.amazoncognito.com";
+        const clientId = config.COGNITO_CLIENT_ID;
+        // "16g32no3p69nb8sp6qi55fmoj4";
+        const redirectUri = config.REDIRECT_URI;
+        // "http://localhost:3000/dashboard.html";
 
         // Check if user is signed in
         const accessToken = localStorage.getItem("accessToken");
