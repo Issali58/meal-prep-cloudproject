@@ -392,17 +392,15 @@
             }
 
             const startDate = document.getElementById("startDate").value;
-            const duration = document.getElementById("duration").value;
+            const totalWeeks = document.getElementById("totalweeks").value;
             const specialRequests =
               document.getElementById("specialRequests")?.value || "";
 
             const orderDetails = {
               email: userInfo.email,
               startDate: startDate,
-              duration: parseInt(duration),
-              totalWeeks: parseInt(duration),
+              totalWeeks: parseInt(totalWeeks),
               planType: "premium",
-              specialRequests: specialRequests,
               orderItems: [
                 {
                   mealName: "Grilled Salmon with Asparagus",
