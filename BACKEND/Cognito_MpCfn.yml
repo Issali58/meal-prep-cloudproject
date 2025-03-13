@@ -67,6 +67,7 @@ Resources:
                 Action:
                   - "cognito-idp:AdminInitiateAuth"
                   - "cognito-idp:AdminCreateUser"
+                  - "cognito-idp:AdminGetUser"
                   - "cognito-idp:AdminDeleteUser"
                   - "cognito-idp:Listusers"
                 Resource: !GetAtt CognitoUserPool.Arn
@@ -348,6 +349,9 @@ Resources:
           DYNAMODB_TABLE_NAME: !Ref DynamodbtableName
           SENDER_EMAIL: !Ref SenderEmailParameter
           EMAIL_DOMAIN_ID: !Ref EmailDomainID
+          COGNITO_USER_POOL_ID: !Ref CognitoUserPool
+          COGNITO_USER_POOL_CLIENT_ID: !Ref CognitoUserPoolClient
+
       Code:
         ZipFile: |
           import os
@@ -369,14 +373,9 @@ Resources:
             
               print(f"JWT claims: {claims}")
               
-              # Extract user information from JWT claims
-              user_email = claims.get('email')
-              user_name = (claims.get('name') or
-                  claims.get('cognito:username') or
-                  claims.get('given_name'))
-              print(f"User email: {user_email}, User name: {user_name}")
+             
 
-              # this extracts the user id from the cognito token of the payload
+              # this extracts the user id from the cognito ID token of the payload
               user_id = claims.get('sub')
 
               if user_id is None:
@@ -385,10 +384,24 @@ Resources:
                   'body': json.dumps({'error': 'User ID not authenticated'})
                 }
 
-              # Extract order details from the request body
+              # intialise cognito client
+              cognito = boto3.client('cognito-idp')
+
+              # get user details from the ID TOKEN
+              user_response = cognito.admin_get_user(
+                UserPoolId=os.environ['COGNITO_USER_POOL_ID'],
+                Username=user_id
+              )
+              # extract user details to be added to the DB
+              user_attributes = {attr['Name']: attr['Value'] for attr in user_response['UserAttributes']}
+
+              user_name = user_attributes.get('name', user_attributes.get('given_name', 'Unknown'))
+             
+             # Extract order details from the request body
               # this extraction is robust to extract both 
                 # json and dictionary payload structure
               body = event.get('body', {})
+
               # order_details = body['order_details']
               print(f"Received event: {json.dumps(event)}")
 
