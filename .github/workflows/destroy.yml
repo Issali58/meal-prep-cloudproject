@@ -1,0 +1,59 @@
+name: Destroy Meal-Prep Stack
+
+on:
+  workflow_dispatch: # Manual trigger to destroy the stack
+
+env:
+  AWS_REGION: us-east-1
+  STACK_NAME: CognitoMpCfn
+  OIDC_STACK_NAME: oidc-provider-stack
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Delete SSM Parameter
+        run: |
+          aws ssm delete-parameter \
+            --name "/mealprep/sender-email" || true
+
+      - name: Empty S3 Buckets
+        run: |
+          # Get bucket names from stack
+          BUCKETS=$(aws cloudformation describe-stack-resources \
+            --stack-name ${{ env.STACK_NAME }} \
+            --query "StackResources[?ResourceType=='AWS::S3::Bucket'].PhysicalResourceId" \
+            --output text || echo "")
+
+          # Empty each bucket
+          for BUCKET in $BUCKETS; do
+            echo "Emptying bucket: $BUCKET"
+            aws s3 rm s3://$BUCKET --recursive || true
+          done
+
+      - name: Delete Main CloudFormation Stack
+        run: |
+          echo "Deleting main stack: ${{ env.STACK_NAME }}"
+          aws cloudformation delete-stack --stack-name ${{ env.STACK_NAME }}
+          echo "Waiting for stack deletion to complete..."
+          aws cloudformation wait stack-delete-complete --stack-name ${{ env.STACK_NAME }}
+
+      - name: Delete OIDC Provider Stack
+        run: |
+          echo "Deleting OIDC provider stack: ${{ env.OIDC_STACK_NAME }}"
+          aws cloudformation delete-stack --stack-name ${{ env.OIDC_STACK_NAME }}
+          echo "Waiting for OIDC stack deletion to complete..."
+          aws cloudformation wait stack-delete-complete --stack-name ${{ env.OIDC_STACK_NAME }}
