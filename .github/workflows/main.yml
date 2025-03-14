@@ -2,42 +2,42 @@ name: Deploy Meal-Prep stack
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 env:
-  AWS_REGION: us-east-1  # the region you are deploying ti
-  STACK_NAME: CognitoMpCfn  # stack name
-  SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}  # Store sender email in GitHub secrets
+  AWS_REGION: us-east-1 # the region you are deploying ti
+  STACK_NAME: CognitoMpCfn # stack name
+  SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }} # Store sender email in GitHub secrets
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.13'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
 
-    - name: Install cfn-lint
-      run: |
-        pip install cfn-lint
+      - name: Install cfn-lint
+        run: |
+          pip install cfn-lint
 
-    - name: Install cfn-nag
-      run: |
-        sudo gem install cfn-nag
+      - name: Install cfn-nag
+        run: |
+          sudo gem install cfn-nag
 
-    - name: Run cfn-lint
-      run: |
-        cfn-lint "./BACKEND/Cognito_MpCfn.yml"
+      - name: Run cfn-lint
+        run: |
+          cfn-lint "./BACKEND/Cognito_MpCfn.yml"
 
-    - name: Run cfn-nag
-      run: |
-        cfn_nag_scan --input-path BACKEND/Cognito_MpCfn.yml
+      - name: Run cfn-nag
+        run: |
+          cfn_nag_scan --input-path BACKEND/Cognito_MpCfn.yml
 
   deploy:
     needs: validate
@@ -45,54 +45,54 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    # First deployment: Use AWS credentials to set up OIDC
-    - name: Configure AWS credentials for OIDC setup
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
-    - name: Deploy OIDC Provider Stack
-      uses: aws-actions/aws-cloudformation-github-deploy@v1
-      with:
-        name: oidc-provider-stack
-        template: ./BACKEND/OIDC_stack.yml  
-        capabilities: CAPABILITY_NAMED_IAM
-        no-fail-on-empty-changeset: "1"  
-        
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: ${{ secrets.GITHUB_ACTIONS_ROLE_ARN }}
-        # role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
-        aws-region: ${{ env.AWS_REGION }}
-          
-    - name: Create SSM Parameter
-      run: |
-        aws ssm put-parameter \
-          --name "/mealprep/sender-email" \
-          --value "${{ secrets.SENDER_EMAIL }}" \
-          --type "String" \
-          --overwrite
+      # First deployment: Use AWS credentials to set up OIDC
+      - name: Configure AWS credentials for OIDC setup
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Deploy OIDC Provider Stack
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: oidc-provider-stack
+          template: ./BACKEND/OIDC_stack.yml
+          capabilities: CAPABILITY_NAMED_IAM
+          no-fail-on-empty-changeset: "1"
 
-    - name: AWS CloudFormation Validate
-      run: |
-        aws cloudformation validate-template \
-          --template-body "file://./BACKEND/Cognito_MpCfn.yml"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.GITHUBACTIONSROLEARN }}
+          # role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
 
-    - name: Deploy CloudFormation Stack
-      uses: aws-actions/aws-cloudformation-github-deploy@v1
-      with:
-        name: ${{ env.STACK_NAME }}
-        template: "./BACKEND/Cognito_MpCfn.yml"
-        parameter-overrides: >-
-          EnvironmentName=dev,
-          DynamodbtableName=MealPrepOrderTable2,
-          EmailDomainID=gmail.com
-        capabilities: CAPABILITY_NAMED_IAM
-        no-fail-on-empty-changeset: "1"
+      - name: Create SSM Parameter
+        run: |
+          aws ssm put-parameter \
+            --name "/mealprep/sender-email" \
+            --value "${{ secrets.SENDER_EMAIL }}" \
+            --type "String" \
+            --overwrite
+
+      - name: AWS CloudFormation Validate
+        run: |
+          aws cloudformation validate-template \
+            --template-body "file://./BACKEND/Cognito_MpCfn.yml"
+
+      - name: Deploy CloudFormation Stack
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: ${{ env.STACK_NAME }}
+          template: "./BACKEND/Cognito_MpCfn.yml"
+          parameter-overrides: >-
+            EnvironmentName=dev,
+            DynamodbtableName=MealPrepOrderTable2,
+            EmailDomainID=gmail.com
+          capabilities: CAPABILITY_NAMED_IAM
+          no-fail-on-empty-changeset: "1"
