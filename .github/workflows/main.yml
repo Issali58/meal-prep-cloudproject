@@ -50,20 +50,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # First deployment: Use AWS credentials to set up OIDC
-      - name: Configure AWS credentials for OIDC setup
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-      - name: Deploy OIDC Provider Stack
-        uses: aws-actions/aws-cloudformation-github-deploy@v1
-        with:
-          name: oidc-provider-stack
-          template: ./BACKEND/OIDC_stack.yml
-          capabilities: CAPABILITY_NAMED_IAM
-          no-fail-on-empty-changeset: "1"
+      # First deployment: Use AWS OIDC role to set up the application stack
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
