@@ -6,7 +6,6 @@ on:
 env:
   AWS_REGION: us-east-1
   STACK_NAME: CognitoMpCfn
-  OIDC_STACK_NAME: oidc-provider-stack
 
 jobs:
   destroy:
@@ -50,10 +49,3 @@ jobs:
           aws cloudformation delete-stack --stack-name ${{ env.STACK_NAME }}
           echo "Waiting for stack deletion to complete..."
           aws cloudformation wait stack-delete-complete --stack-name ${{ env.STACK_NAME }}
-
-      - name: Delete OIDC Provider Stack
-        run: |
-          echo "Deleting OIDC provider stack: ${{ env.OIDC_STACK_NAME }}"
-          aws cloudformation delete-stack --stack-name ${{ env.OIDC_STACK_NAME }}
-          echo "Waiting for OIDC stack deletion to complete..."
-          aws cloudformation wait stack-delete-complete --stack-name ${{ env.OIDC_STACK_NAME }}
