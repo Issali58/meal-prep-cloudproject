@@ -1027,3 +1027,6 @@ Outputs:
   CognitoDomainUrl:
     Description: The Cognito Domain URL for the hosted UI access
     Value: !Sub "https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
+  APIGatewayID:
+    Description: The API Gateway ID
+    Value: !Ref Apigateway
