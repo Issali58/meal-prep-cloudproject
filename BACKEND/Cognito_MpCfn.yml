@@ -299,7 +299,7 @@ Resources:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
       UserPoolId: !Ref CognitoUserPool
-      Domain: resto-auth
+      Domain: nutrigains-auth
 
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
