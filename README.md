@@ -1,14 +1,13 @@
 # Meal prep project: NUTRIGAINS
 
-NUTRIGAINS is a serverless meal prep application that allows users to register, place meal orders, and receive notifications. It uses cloud-native services to handle user management, authentication, and order processing.
+NUTRIGAINS is a serverless meal prep application that allows users to register, place meal orders, and receive notifications. It leverages cloud-native services to handle user management, authentication, and order processing.
 
 ## Project overview
 
 This project implements a serverless architecture using AWS. This implementation is abstracted with a frontend for users to interact with the services. This allows users to do the following.
-
-- Create user accounts for authentication with the API.
-- Create meal orders with different options
-- Email notifications for every order placed
+• Create user accounts for authentication with the API.
+• Create meal orders with different options
+• Email notifications for every order placed
 
 ## Architecture
 
@@ -26,6 +25,32 @@ On the backend, the following AWS services were used for the application.
 - **AWS CloudFormation**: to handle Infrastructure as code during deployment CI/CD.
 
 ## Architectural diagram
+
+Below is a brief overview of the architectural diagram.
+
+1. The frontend uses HTML, CSS, Javascript to provide the UI component for authenticate users to sign in in the web application.
+
+2. The users are directed to the Cognito hosted UI to sign in with their credentials for authentication.
+
+3. After successful authentication, Cognito provides a JWT to give identity and access for a user to give requests to the backend.
+
+4. As the JSON web Token is stored in the frontend, the user makes an order request (call) to the API gateway with the request containing the access token from the JWT claims.
+
+5. Api gateway then validates the access token provided in the request with Cognito and the Api gateway authorizer.
+
+6. After successful validation, the request with the token is sent to the backend AWS Lambda function responsible for creating the order placed. The function extracts details from the JWT token claims.
+
+7. The create order function extracts the necessary information from the user claims from the access token, creates addition information, and bundles all that information with the payload information from the request and writes the order to DynamoDB.
+
+8. When the Lambda function writes to the database, the lambda function will send a response to the API which is then sent to user as a popup message of a successful order on the frontend.
+
+9. In DynamoDB, DynamoDB streams are enabled to detect any added information added to the table. This then triggers the email notification lambda function.
+
+10. The email notification lambda function is triggered and then it extracts the necessary information like the order id to be placed in the email template.
+
+11. Amazon SES is then used with the email template formats from the order notification function to send order notification emails to the registered user emails.
+
+Cloudwatch logs groups for the API gateway to log all requests and response for the API Gateway. The create order lambda function also has a log group created to log all invocations made and executions conducted by the lambda function when it is run.
 
 ## API Endpoints
 
@@ -47,77 +72,69 @@ The web app uses Amazon Cognito for user registration and login.
 The frontend is integrated using the following:
 
 1. After the automatic deployment of the stack using GitHub Actions, obtain the outputs.
-
-- API endpoint for the meal order creation.
-- Cognito user pool ID (id for the AWS Cognito resource of service)
-- Cognito user client ID (identifier of app client in the user pool)
-
+   o API endpoint for the meal order creation.
+   o Cognito user pool ID (id for the AWS Cognito resource of service)
+   o Cognito user client ID (identifier of app client in the user pool)
 2. Configure your frontend app to the following values
 
-````javascript
- const config = {
- COGNITO_DOMAIN: “userpooldomain.auth.{region}.amazoncognito.com",
- COGNITO_CLIENT_ID: "{UserPoolClientId}",
- LOGOUT_URI: "http://localhost:3000/index3.html",
- REDIRECT_URI: "http://localhost:3000/dashboard.html",
- API_ENDPOINT:
- “https://{api-id}.execute-api.{region}.amazonaws.com/dev'
+```config.js
+const config = {
+  COGNITO_DOMAIN: “userpooldomain.auth.{region}.amazoncognito.com",
+  COGNITO_CLIENT_ID: "{UserPoolClientId}",
+  LOGOUT_URI: "http://localhost:3000/index3.html",
+  REDIRECT_URI: "http://localhost:3000/dashboard.html",
+  API_ENDPOINT:
+    “https://{api-id}.execute-api.{region}.amazonaws.com/dev'
 /dev/OrdersTable",
-redirect_uri: "http://localhost:3000/index3.html"
- };
- ```
+  redirect_uri: "http://localhost:3000/index3.html"
+};
+```
 
-3.	The Amazon Cognito authentication flow in the frontend
-
- - User registration
- -	Email verification
- -	User login
- - JWT acquisition
- - The JWT is included in the API request
+3. The Amazon Cognito authentication flow in the frontend
+   o User registration
+   o Email verification
+   o User login
+   o JWT acquisition
+   o The JWT is included in the API request
 
 ## Deployment
 
 ### Prerequisites
 
--	GitHub repository for the CI/CD workflow for deployment
--	Verified emails using Amazon SES.
-
-**Note:** If your account has Amazon SES in sandbox mode, you must add any email address to the SES list of identities manually and verify it. This project was done with SES sandbox. You have request production access and fill out a request form, then you can send emails to any address without manual verification.
-
--	An AWS account with permissions to create IAM roles to use OIDC (OpenID connect).
+- GitHub repository for the CI/CD workflow for deployment
+- Verified emails using Amazon SES.
+  Note: If your account has Amazon SES in sandbox mode, you must add any email address to the SES list of identities manually and verify it. This project was done with SES sandbox hence you can request production access by filling out a request form, then you can send emails to any address without manual verification.
+- An AWS account with permissions to create IAM roles to use OIDC (OpenID connect).
 
 ### Manual Deployment
+
 1. Clone this repository:
-```
 
-git clone https://github.com/Issali58/meal-prep-cloudproject.git
-cd meal-prep-cloudproject
-
-```
-
+   ```
+   git clone https://github.com/Issali58/meal-prep-cloudproject.git
+   cd meal-prep-cloudproject
+   ```
 
 2. Deploy the CloudFormation stack:
-```
 
-aws cloudformation deploy \
- --template-file CognitoMpCfn.yml \
- --stack-name meal-prep-stack \
- --parameter-overrides \
- EnvironmentName=dev \
- DynamodbtableName=MealPrepOrderTable2 \
- EmailDomainID=yourdomain.com \
- SenderEmailParameter=verified-email@yourdomain.com \
- --capabilities CAPABILITY_NAMED_IAM
+   ```
+   aws cloudformation deploy \
+     --template-file CognitoMpCfn.yml \
+     --stack-name meal-prep-stack \
+     --parameter-overrides \
+       EnvironmentName=dev \
+       DynamodbtableName=MealPrepOrderTable2 \
+       EmailDomainID=yourdomain.com \
+       SenderEmailParameter=verified-email@yourdomain.com \
+     --capabilities CAPABILITY_NAMED_IAM
+   ```
 
-```
 3. Get the deployment outputs:
-```
-
-aws cloudformation describe-stacks \
- --stack-name meal-prep-stack \
- --query "Stacks[0].Outputs"
-
-````
+   ```
+   aws cloudformation describe-stacks \
+     --stack-name meal-prep-stack \
+     --query "Stacks[0].Outputs"
+   ```
 
 ### Deployment with GitHub Actions and OIDC
 
@@ -128,50 +145,48 @@ This project uses secure deployment using GitHub actions and OpenID Connect (OID
 To set up the OIDC authentication, deploy the OIDC_stack in your account manually using cloudformation. You cannot add the OIDC stack creation in a workflow file because it will cause a circular dependency hence you will have issues destroying the infrastructure using a workflow file.
 
 1. Create a stack to create an IAM OIDC Identity provider for GitHub
-
-   ```yaml
-   GitHubOIDCProvider:
-    Type: AWS::IAM::OIDCProvider
-    Properties:
-    	Url: https://token.actions.githubusercontent.com
-   	ClientIdList:
-      	     - sts.amazonaws.com
    ```
+   GitHubOIDCProvider:
+   Type: AWS::IAM::OIDCProvider
+   Properties:
+   Url: https://token.actions.githubusercontent.com
+   ClientIdList: - sts.amazonaws.com
 
-2. Create an IAM role within the stack for GitHub actions. Configure the IAM role to limit access to your repository:
-
-```yaml
-GitHubActionsRole:
-  Type: AWS::IAM::Role
-  Properties:
-    AssumeRolePolicyDocument:
-      Version: "2012-10-17"
-      Statement:
-        - Effect: Allow
-          Principal: Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-       provider/token.actions.githubusercontent.com"
-          Action: sts:AssumeRoleWithWebIdentity
-          Condition:
-            StringLike:
-              "token.actions.githubusercontent.com:sub": "repo:yourrepo/path:*"
+```
+2.	Create an IAM role within the stack for GitHub actions. Configure the IAM role to limit access to your repository:
 ```
 
-3. Obtain the IAM role Arn to use it in the workflow file to deploy the infrastructure.
+GitHubActionsRole:
+Type: AWS::IAM::Role
+Properties:
+AssumeRolePolicyDocument:
+Version: "2012-10-17"
+Statement: - Effect: Allow
+Principal:
+Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc- provider/token.actions.githubusercontent.com"
+Action: sts:AssumeRoleWithWebIdentity
+Condition:
+StringLike:
+"token.actions.githubusercontent.com:sub": "repo:yourrepo/path:\*"
+
+```
+3.	Obtain the IAM role Arn to use it in the workflow file to deploy the infrastructure.
 
 #### GitHub Actions workflow file
 
 Create a .github/workflows/main.yml in your repo to deploy the infrastructure.
+```
 
-```yaml
 name: Deploy Meal-Prep stack
 on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+push:
+branches: [master]
+pull_request:
+branches: [master]
 env:
-  AWS_REGION: us-east-1 # the region to which you are deploying.
-  STACK_NAME: CognitoMpCfn # stack name.
-  SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }} # Store sender email in GitHub secrets
+AWS_REGION: us-east-1 # the region to which you are deploying.
+STACK_NAME: CognitoMpCfn # stack name.
+SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }} # Store sender email in GitHub secrets
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -214,8 +229,8 @@ jobs:
           aws ssm put-parameter \
             --name "/mealprep/sender-email" \
             --value "${{ secrets.SENDER_EMAIL }}" \
-            --type "String" \
-            --overwrite
+ --type "String" \
+ --overwrite
 
       - name: AWS CloudFormation Validate
         run: |
@@ -232,17 +247,16 @@ jobs:
             EmailDomainID=gmail.com
           capabilities: CAPABILITY_NAMED_IAM
           no-fail-on-empty-changeset: "1"
-```
+
+````
+
 
 #### GitHub Secrets
 
 These are the secrets to be used in the workflow file and stored in your repository.
-
-- SENDER_EMAIL: verified email address in SES responsible for sending email notificaations to different users.
-- GITHUBACTIONSROLEARN: this from the ARN created from the oidc stack.
-
+-	SENDER_EMAIL: verified email address in SES responsible for sending email notificaations to different users.
+-	GITHUBACTIONSROLEARN: this from the ARN created from the oidc stack.
 ### Order Data Structure
-
 ```Json
 {
   "userId": "cognito-user-id",
@@ -260,7 +274,7 @@ These are the secrets to be used in the workflow file and stored in your reposit
   "startDate": "2023-12-01",
   "totalWeeks": 2
 }
-```
+````
 
 ## Email Notification
 
@@ -328,7 +342,7 @@ http://localhost:3000 or http://<your-ip>:3000
 
 Log groups are created to help when you are troubleshooting issues like the lambda function not executing. An API gateway log group is created to log all request that are handled by the API gateway.
 
-```yaml
+```
 ApiGatewayLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -341,7 +355,7 @@ ApiGatewayLogGroup:
       RetentionInDays: 7
 ```
 
-## Securty considerations
+## Security considerations
 
 - Use of OIDC for secure deployment instead of AWS access keys in GitHub actions CI/CD.
 - User passwords managed by Amazon Cognito use secure policies.
@@ -375,7 +389,3 @@ Since this a development environment with low traffic i.e. less than 1000 users,
 
 Project maintained by Isaac.
 GitHub: https://github.com/Issali58
-
-```
-
-```
