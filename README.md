@@ -249,7 +249,7 @@ jobs:
           template: "./BACKEND/Cognito_MpCfn.yml"
           parameter-overrides: >-
             EnvironmentName=dev,
-            DynamodbtableName=MealPrepOrderTable2,
+            DynamodbtableName=YOURTABLENAME,
             EmailDomainID=gmail.com
           capabilities: CAPABILITY_NAMED_IAM
           no-fail-on-empty-changeset: "1"
