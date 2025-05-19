@@ -75,6 +75,7 @@ The frontend is integrated using the following:
    o API endpoint for the meal order creation.
    o Cognito user pool ID (id for the AWS Cognito resource of service)
    o Cognito user client ID (identifier of app client in the user pool)
+   
 2. Configure your frontend app to the following values
 
 ```config.js
@@ -91,6 +92,7 @@ const config = {
 ```
 
 3. The Amazon Cognito authentication flow in the frontend
+
    o User registration
    o Email verification
    o User login
