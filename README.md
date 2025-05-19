@@ -375,21 +375,21 @@ Since this a development environment with low traffic i.e. less than 1000 users,
 
 - **Amazon Cognito**: Free tier includes 50,000 monthly active users. Pricing is per monthly active user when users grow past 50,000 monthly users.
 - **Amazon API Gateway**:
-  o First 1 million API calls per month are included in the free tier.
-  o $3.50 per million API calls thereafter
-  o Data transfer costs apply for outbound traffic.
+  - First 1 million API calls per month are included in the free tier.
+  - $3.50 per million API calls thereafter
+  - Data transfer costs apply for outbound traffic.
 - **AWS Lambda**:
-  o Free tier includes 1 million requests per month and 400,000 GB seconds of compute time.
-  o $0.20 per 1 million requests beyond the first million requests
+  - Free tier includes 1 million requests per month and 400,000 GB seconds of compute time.
+  - $0.20 per 1 million requests beyond the first million requests
 - **Amazon DynamoDB**:
-  o Free tier includes 25 GB of storage and 25 WCUs/RCUs
-  o On-demand pricing or provisioned capacity (5 RCU/WCU in this template)
+  - Free tier includes 25 GB of storage and 25 WCUs/RCUs
+  - On-demand pricing or provisioned capacity (5 RCU/WCU in this template)
 - **Amazon SES**:
-  o $0.10 per 1000 emails sent. In sandbox mode you are limited to 200 emails sent per 24 hours.
+  - $0.10 per 1000 emails sent. In sandbox mode you are limited to 200 emails sent per 24 hours.
 - **CloudWatch logs**:
-  o 5 GB of logs ingested, and 5 GB of logs stored of free per month.
-  o $0.5 per GB for ingestion and $0.03 per GB beyond free tier limit.
-  o The logs retention is set to 7 days in this architecture to reduce storage costs.
+  - 5 GB of logs ingested, and 5 GB of logs stored of free per month.
+  - $0.5 per GB for ingestion and $0.03 per GB beyond free tier limit.
+  - The logs retention is set to 7 days in this architecture to reduce storage costs.
 
 ## Contact
 
