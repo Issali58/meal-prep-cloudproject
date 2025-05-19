@@ -153,9 +153,10 @@ To set up the OIDC authentication, deploy the OIDC_stack in your account manuall
    Properties:
    Url: https://token.actions.githubusercontent.com
    ClientIdList: - sts.amazonaws.com
+   ```
 
-```
 2.	Create an IAM role within the stack for GitHub actions. Configure the IAM role to limit access to your repository:
+
 ```
 
 GitHubActionsRole:
@@ -172,11 +173,13 @@ StringLike:
 "token.actions.githubusercontent.com:sub": "repo:yourrepo/path:\*"
 
 ```
+
 3.	Obtain the IAM role Arn to use it in the workflow file to deploy the infrastructure.
 
 #### GitHub Actions workflow file
 
 Create a .github/workflows/main.yml in your repo to deploy the infrastructure.
+
 ```
 
 name: Deploy Meal-Prep stack
@@ -250,7 +253,7 @@ jobs:
           capabilities: CAPABILITY_NAMED_IAM
           no-fail-on-empty-changeset: "1"
 
-````
+```
 
 
 #### GitHub Secrets
