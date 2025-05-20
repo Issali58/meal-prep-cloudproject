@@ -25,7 +25,7 @@ On the backend, the following AWS services were used for the application.
 - **AWS CloudFormation**: to handle Infrastructure as code during deployment CI/CD.
 
 ## Architectural diagram
-!(BACKEND/archdia1.png)
+![](BACKEND/archdia1.png)
 
 Below is a brief overview of the architectural diagram.
 
