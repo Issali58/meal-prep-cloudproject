@@ -41,7 +41,7 @@ Below is a brief overview of the architectural diagram.
 
 6. After successful validation, the request with the token is sent to the backend AWS Lambda function responsible for creating the order placed. The function extracts details from the JWT token claims.
 
-7. The create order function extracts the necessary information from the user claims from the access token, creates addition information, and bundles all that information with the payload information from the request and writes the order to DynamoDB.
+7. The create order function extracts the necessary information from the user claims from the access token, creates addition information, and bundles all that information with the payload information from the request and writes the order to DynamoDB. Thw lambda function uses the user id from the cognito token for each registered user provided and uses it as a primary key in the database.
 
 8. When the Lambda function writes to the database, the lambda function will send a response to the API which is then sent to user as a popup message of a successful order on the frontend.
 
